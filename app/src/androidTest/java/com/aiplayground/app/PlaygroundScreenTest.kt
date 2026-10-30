@@ -29,6 +29,9 @@ class PlaygroundScreenTest {
     fun startPauseAndSleepButtonsUpdateStatus() {
         composeRule.onNodeWithText("Start").performClick()
         composeRule.onNodeWithText("Agents active").assertIsDisplayed()
+        composeRule.onNodeWithText("AGENT ACTIVITY").assertIsDisplayed()
+        composeRule.onNodeWithText("ARIA: Creating new ideas").assertIsDisplayed()
+        composeRule.onNodeWithText("NOVA: Exploring available spaces").assertIsDisplayed()
 
         composeRule.onNodeWithText("Pause").performClick()
         composeRule.onNodeWithText("Ready to explore").assertIsDisplayed()
