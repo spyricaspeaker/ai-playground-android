@@ -14,7 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -45,7 +45,7 @@ fun PlaygroundScreen() {
     var running by remember { mutableStateOf(false) }
     var sleeping by remember { mutableStateOf(false) }
     var selectedAgent by remember { mutableStateOf<String?>(null) }
-    var instruction by remember { mutableStateOf("") }
+    var instruction by remember { mutableStateOf("") }\n    var accessCode by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var requestError by remember { mutableStateOf<String?>(null) }
     val histories = remember { mutableStateMapOf<String, List<String>>() }
@@ -174,7 +174,7 @@ fun PlaygroundScreen() {
                                     AgentApi.sendMessage(
                                         agent = agent.name,
                                         message = message,
-                                        history = previousHistory,
+                                        history = previousHistory,\n                                        accessCode = accessCode,
                                         onSuccess = { reply ->
                                             histories[agent.name] = histories[agent.name].orEmpty() + "${agent.name}: $reply"
                                             sending = false
@@ -186,7 +186,7 @@ fun PlaygroundScreen() {
                                     )
                                 }
                             },
-                            enabled = instruction.isNotBlank() && !sending,
+                            enabled = instruction.isNotBlank() && accessCode.isNotBlank() && !sending,
                             modifier = Modifier.fillMaxWidth()
                         ) { Text(if (sending) "Waiting for ${agent.name}..." else "Send to ${agent.name}") }
 
