@@ -46,14 +46,15 @@ fun PlaygroundScreen() {
     var sleeping by remember { mutableStateOf(false) }
     var selectedAgent by remember { mutableStateOf<String?>(null) }
     var instruction by remember { mutableStateOf("") }
+    var sending by remember { mutableStateOf(false) }
+    var requestError by remember { mutableStateOf<String?>(null) }
     val histories = remember { mutableStateMapOf<String, List<String>>() }
-    val pendingActions = remember { mutableStateMapOf<String, String>() }
 
     val agents = listOf(
         PlaygroundAgent("ARIA", "Creative Agent", "Creating ideas", "Develops concepts, stories, designs, and creative approaches."),
-        PlaygroundAgent("NOVA", "Explorer Agent", "Exploring the world", "Investigates questions, compares options, and gathers discoveries."),
-        PlaygroundAgent("ATLAS", "Builder Agent", "Planning a prototype", "Turns approved ideas into plans, designs, and build steps."),
-        PlaygroundAgent("ECHO", "Observer Agent", "Monitoring activity", "Tracks playground activity and summarizes what the team is doing.")
+        PlaygroundAgent("NOVA", "Explorer Agent", "Exploring the world", "Investigates questions, compares possibilities, and identifies useful discoveries."),
+        PlaygroundAgent("ATLAS", "Builder Agent", "Planning a prototype", "Turns ideas into technical plans, software designs, and build steps."),
+        PlaygroundAgent("ECHO", "Observer Agent", "Monitoring activity", "Summarizes supplied activity, tracks decisions, and coordinates team handoffs.")
     )
 
     val areas = listOf(
@@ -117,6 +118,7 @@ fun PlaygroundScreen() {
                             .clickable {
                                 selectedAgent = agent.name
                                 instruction = ""
+                                requestError = null
                             }
                     ) {
                         Column(Modifier.padding(12.dp)) {
@@ -150,58 +152,59 @@ fun PlaygroundScreen() {
                         Text("${agent.name} WORKSPACE", color = Accent, fontSize = 21.sp)
                         Text(agent.role, color = Color.White, fontSize = 16.sp)
                         Text(agent.description, color = Color.LightGray)
-                        Text("GIVE ${agent.name} AN INSTRUCTION", color = Color.White)
+                        Text("OPENAI-POWERED AGENT", color = Accent, fontSize = 12.sp)
+                        Text("Send an instruction and ${agent.name} will respond using its own role and conversation context.", color = Color.LightGray)
                         OutlinedTextField(
                             value = instruction,
                             onValueChange = { instruction = it },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text("Type an instruction...") },
-                            minLines = 2
+                            minLines = 2,
+                            enabled = !sending
                         )
                         Button(
                             onClick = {
                                 val message = instruction.trim()
-                                if (message.isNotEmpty()) {
-                                    histories[agent.name] = histories[agent.name].orEmpty() +
-                                        "You: $message" +
-                                        "${agent.name}: Instruction saved. This prototype does not connect to a live AI model yet."
-                                    pendingActions[agent.name] = "Review a proposed next step for: $message"
+                                if (message.isNotEmpty() && !sending) {
+                                    val previousHistory = histories[agent.name].orEmpty()
+                                    histories[agent.name] = previousHistory + "You: $message"
                                     instruction = ""
+                                    sending = true
+                                    requestError = null
+                                    AgentApi.sendMessage(
+                                        agent = agent.name,
+                                        message = message,
+                                        history = previousHistory,
+                                        onSuccess = { reply ->
+                                            histories[agent.name] = histories[agent.name].orEmpty() + "${agent.name}: $reply"
+                                            sending = false
+                                        },
+                                        onError = { error ->
+                                            requestError = error
+                                            sending = false
+                                        }
+                                    )
                                 }
                             },
-                            enabled = instruction.isNotBlank(),
+                            enabled = instruction.isNotBlank() && !sending,
                             modifier = Modifier.fillMaxWidth()
-                        ) { Text("Send instruction") }
+                        ) { Text(if (sending) "Waiting for ${agent.name}..." else "Send to ${agent.name}") }
+
+                        requestError?.let {
+                            Text("Connection error: $it", color = Color(0xFFFFB4AB))
+                        }
 
                         Text("ACTIVITY HISTORY", color = Color.White)
                         val history = histories[agent.name].orEmpty()
                         if (history.isEmpty()) {
-                            Text("No messages yet. Send an instruction to start this agent's history.", color = Color.LightGray)
+                            Text("No messages yet. Start a conversation with ${agent.name}.", color = Color.LightGray)
                         } else {
-                            history.forEach { entry ->
-                                Text(entry, color = Color.LightGray)
+                            history.takeLast(24).forEach { entry ->
+                                Text(entry, color = if (entry.startsWith("You:")) Color(0xFFD0C8FF) else Color.White)
                             }
                         }
-
-                        pendingActions[agent.name]?.let { proposal ->
-                            Divider(color = Color.Gray)
-                            Text("PROPOSED ACTION — REVIEW REQUIRED", color = Accent)
-                            Text(proposal, color = Color.White)
-                            Text("This is a simulated proposal. Nothing runs outside this app.", color = Color.LightGray, fontSize = 12.sp)
-                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Button(onClick = {
-                                    histories[agent.name] = histories[agent.name].orEmpty() +
-                                        "You approved the simulated proposal."
-                                    pendingActions.remove(agent.name)
-                                }) { Text("Approve") }
-                                OutlinedButton(onClick = {
-                                    histories[agent.name] = histories[agent.name].orEmpty() +
-                                        "You rejected the simulated proposal."
-                                    pendingActions.remove(agent.name)
-                                }) { Text("Reject") }
-                            }
-                        }
-                        TextButton(onClick = { selectedAgent = null }) { Text("Close workspace") }
+                        Text("Agent responses require the secure backend and a valid OpenAI API key.", color = Color.LightGray, fontSize = 11.sp)
+                        TextButton(onClick = { selectedAgent = null; requestError = null }) { Text("Close workspace") }
                     }
                 }
             }
@@ -212,14 +215,14 @@ fun PlaygroundScreen() {
             Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
                 Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     when {
-                        running -> {
-                            Text("ARIA: Creating new ideas", color = Color.White)
-                            Text("NOVA: Exploring available spaces", color = Color.White)
-                            Text("ATLAS: Planning a prototype", color = Color.White)
-                            Text("ECHO: Monitoring the playground", color = Color.White)
-                        }
                         sleeping -> Text("All agents are resting.", color = Color.LightGray)
-                        else -> Text("Press Start to begin simulated agent activities.", color = Color.LightGray)
+                        running -> {
+                            Text("ARIA: Creative agent ready", color = Color.White)
+                            Text("NOVA: Explorer agent ready", color = Color.White)
+                            Text("ATLAS: Builder agent ready", color = Color.White)
+                            Text("ECHO: Observer agent ready", color = Color.White)
+                        }
+                        else -> Text("Open an agent workspace to start a conversation.", color = Color.LightGray)
                     }
                 }
             }
