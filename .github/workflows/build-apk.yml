@@ -1,5 +1,4 @@
-
-name: Build AI Playground APK
+name: Build and Cloud Test AI Playground
 
 on:
   workflow_dispatch:
@@ -12,8 +11,8 @@ on:
       - main
 
 jobs:
-  build:
-    name: Build Android APK
+  build-and-test:
+    name: Build and test on Android emulator
     runs-on: ubuntu-latest
 
     steps:
@@ -48,4 +47,30 @@ jobs:
         with:
           name: AI-Playground-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-          
+
+      - name: Enable KVM for Android emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run UI tests on cloud Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: gradle connectedDebugAndroidTest
+
+      - name: Save emulator test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: AI-Playground-Android-Test-Reports
+          path: |
+            app/build/reports/androidTests/connected/
+            app/build/outputs/androidTest-results/connected/
+          if-no-files-found: ignore
