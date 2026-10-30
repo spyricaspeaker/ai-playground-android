@@ -67,7 +67,7 @@ jobs:
             gradle connectedDebugAndroidTest
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am force-stop com.aiplayground.app
-            adb shell monkey -p com.aiplayground.app 1
+            adb shell am start -n com.aiplayground.app/.MainActivity
             sleep 5
             mkdir -p app/build/preview
             adb exec-out screencap -p > app/build/preview/AI-Playground-Emulator.png
