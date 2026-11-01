@@ -12,7 +12,10 @@ Deploy the Node.js service in \`backend/\` using the included \`render.yaml\`. C
 
 - \`OPENAI_API_KEY\`: OpenAI API key. Store it only in backend secret settings, never in the Android app or Git.
 - \`APP_ACCESS_CODE\`: create a long random secret and enter the same value in the app.
-- \`OPENAI_MODEL\`: optional; defaults to \`gpt-6-luna\`.
+- `OPENAI_MODEL`: economical default model; defaults to `gpt-6-luna`.
+- `OPENAI_MODEL_COMPLEX`: stronger model for research, engineering, and team synthesis; defaults to `gpt-6.1-sol`.
+- `OPENAI_MODEL_NOVA` and `OPENAI_MODEL_ATLAS`: optional per-agent overrides. If unset, both use `OPENAI_MODEL_COMPLEX`.
+- `OPENAI_MODEL_ARIA` and `OPENAI_MODEL_ECHO`: optional per-agent overrides. If unset, both use `OPENAI_MODEL`.
 
 After deployment, enter the service HTTPS URL and app access code in the app. The \`/health\` endpoint should return \`{"ok":true}\`.
 
