@@ -4,6 +4,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -40,7 +41,7 @@ class PlaygroundScreenTest {
 
     @Test
     fun handshakePanelAuthenticatesMessageAndRejectsReplay() {
-        composeRule.onNodeWithText("SPYRICA HANDSHAKE ENGINE").assertIsDisplayed()
+        composeRule.onNodeWithText("SPYRICA HANDSHAKE ENGINE").performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText("Run local test").performClick()
         composeRule.onNodeWithText(
             "Authentication: PASS · Authenticated handshake accepted · spyrica-core-01"
