@@ -45,7 +45,7 @@ async function postRpc(method, params = {}, id = randomUUID(), { allowNoSession 
     headers,
     body: JSON.stringify({
       jsonrpc: "2.0",
-      id,
+      ...(id ? { id } : {}),
       method,
       params
     }),
