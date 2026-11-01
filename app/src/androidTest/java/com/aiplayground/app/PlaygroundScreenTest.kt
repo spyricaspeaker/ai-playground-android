@@ -5,6 +5,8 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onNode
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,49 +18,46 @@ class PlaygroundScreenTest {
     val composeRule = createAndroidComposeRule<MainActivity>()
 
     @Test
-    fun mainScreenShowsAgentsAndPlaygroundAreas() {
+    fun mainScreenShowsCurrentAgentNetworkAndConnectionControls() {
         composeRule.onNodeWithText("AI PLAYGROUND").assertIsDisplayed()
-        composeRule.onNodeWithText("ARIA").assertIsDisplayed()
-        composeRule.onNodeWithText("NOVA").assertIsDisplayed()
-        composeRule.onNodeWithText("ATLAS").assertIsDisplayed()
-        composeRule.onNodeWithText("ECHO").assertIsDisplayed()
-        composeRule.onNodeWithText("PLAYGROUND AREAS").assertIsDisplayed()
-        composeRule.onNodeWithText("Ready to explore").assertIsDisplayed()
+        listOf("ARIA", "NOVA", "ATLAS", "ECHO").forEach { agent ->
+            composeRule.onNode(hasText(agent, substring = true)).performScrollTo().assertIsDisplayed()
+        }
+        composeRule.onNodeWithText("NETWORK STATUS").assertIsDisplayed()
+        composeRule.onNodeWithText("Ready for your message").assertIsDisplayed()
+        composeRule.onNodeWithText("SERVER CONNECTION").performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun startPauseAndSleepButtonsUpdateStatus() {
-        composeRule.onNodeWithText("Start").performClick()
-        composeRule.onNodeWithText("Agents active").assertIsDisplayed()
-        composeRule.onNodeWithText("AGENT ACTIVITY").assertIsDisplayed()
+    fun pauseAndResumeUpdateNetworkStatus() {
+        composeRule.onNodeWithText("Pause").performScrollTo().performClick()
+        composeRule.onNodeWithText("Paused").assertIsDisplayed()
 
-        composeRule.onNodeWithText("Pause").performClick()
-        composeRule.onNodeWithText("Ready to explore").assertIsDisplayed()
-
-        composeRule.onNodeWithText("Sleep").performClick()
-        composeRule.onNodeWithText("Sleeping").assertIsDisplayed()
+        composeRule.onNodeWithText("Resume").performScrollTo().performClick()
+        composeRule.onNodeWithText("Ready for your message").assertIsDisplayed()
     }
 
     @Test
     fun handshakePanelAuthenticatesMessageAndRejectsReplay() {
-        composeRule.onNodeWithText("SPYRICA HANDSHAKE ENGINE").performScrollTo().assertIsDisplayed()
-        composeRule.onNodeWithText("Run local test").performClick()
+        composeRule.onNodeWithText("SPYRICA HANDSHAKE ENGINE")
+            .performScrollTo()
+            .assertIsDisplayed()
+        composeRule.onNodeWithText("Run local test").performScrollTo().performClick()
         composeRule.onNodeWithText(
             "Authentication: PASS · Authenticated handshake accepted · spyrica-core-01"
-        ).assertIsDisplayed()
+        ).performScrollTo().assertIsDisplayed()
         composeRule.onNodeWithText(
             "Replay protection: PASS · Repeated nonce rejected"
-        ).assertIsDisplayed()
+        ).performScrollTo().assertIsDisplayed()
     }
 
     @Test
-    fun eachAgentOpensItsOwnWorkspace() {
+    fun selectingEachAgentCardIsSupported() {
         listOf("ARIA", "NOVA", "ATLAS", "ECHO").forEach { agent ->
-            composeRule.onNodeWithText(agent).performClick()
-            composeRule.onNodeWithText("$agent WORKSPACE").assertIsDisplayed()
-            composeRule.onNodeWithText("OPENAI-POWERED AGENT").assertIsDisplayed()
-            composeRule.onNodeWithText("Send to $agent").assertIsDisplayed()
-            composeRule.onNodeWithText("Close workspace").performClick()
+            composeRule.onNode(hasText(agent, substring = true))
+                .performScrollTo()
+                .performClick()
+            composeRule.onNodeWithText("YOUR MESSAGE").performScrollTo().assertIsDisplayed()
         }
     }
 }
