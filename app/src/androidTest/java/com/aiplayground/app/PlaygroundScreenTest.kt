@@ -39,6 +39,18 @@ class PlaygroundScreenTest {
     }
 
     @Test
+    fun handshakePanelAuthenticatesMessageAndRejectsReplay() {
+        composeRule.onNodeWithText("SPYRICA HANDSHAKE ENGINE").assertIsDisplayed()
+        composeRule.onNodeWithText("Run local test").performClick()
+        composeRule.onNodeWithText(
+            "Authentication: PASS · Authenticated handshake accepted · spyrica-core-01"
+        ).assertIsDisplayed()
+        composeRule.onNodeWithText(
+            "Replay protection: PASS · Repeated nonce rejected"
+        ).assertIsDisplayed()
+    }
+
+    @Test
     fun eachAgentOpensItsOwnWorkspace() {
         listOf("ARIA", "NOVA", "ATLAS", "ECHO").forEach { agent ->
             composeRule.onNodeWithText(agent).performClick()
