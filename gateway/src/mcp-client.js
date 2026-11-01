@@ -115,7 +115,7 @@ export async function ensureMcpSession() {
     });
     const negotiated = result?.protocolVersion || PROTOCOL_VERSION;
     session = { ...(session || {}), initialized: true, protocolVersion: negotiated };
-    await postRpc("notifications/initialized", {}, undefined, { allowNoSession: true });
+    await postRpc("notifications/initialized", {}, null, { allowNoSession: true });
     return session;
   })();
 
