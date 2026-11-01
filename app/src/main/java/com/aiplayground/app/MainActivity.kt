@@ -14,7 +14,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color\nimport androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -45,7 +45,8 @@ fun PlaygroundScreen() {
     var running by remember { mutableStateOf(false) }
     var sleeping by remember { mutableStateOf(false) }
     var selectedAgent by remember { mutableStateOf<String?>(null) }
-    var instruction by remember { mutableStateOf("") }\n    var accessCode by remember { mutableStateOf("") }
+    var instruction by remember { mutableStateOf("") }
+    var accessCode by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var requestError by remember { mutableStateOf<String?>(null) }
     val histories = remember { mutableStateMapOf<String, List<String>>() }
@@ -174,7 +175,8 @@ fun PlaygroundScreen() {
                                     AgentApi.sendMessage(
                                         agent = agent.name,
                                         message = message,
-                                        history = previousHistory,\n                                        accessCode = accessCode,
+                                        history = previousHistory,
+                                        accessCode = accessCode,
                                         onSuccess = { reply ->
                                             histories[agent.name] = histories[agent.name].orEmpty() + "${agent.name}: $reply"
                                             sending = false
@@ -228,6 +230,10 @@ fun PlaygroundScreen() {
             }
 
             Spacer(Modifier.height(18.dp))
+            Spacer(Modifier.height(22.dp))
+            HandshakePanel()
+
+            Spacer(Modifier.height(22.dp))
             Text("PLAYGROUND AREAS", color = Color.White, fontSize = 19.sp)
             Spacer(Modifier.height(10.dp))
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
