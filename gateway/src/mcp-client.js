@@ -10,7 +10,7 @@ let initializePromise = null;
 let toolsCache = null;
 let toolsCacheAt = 0;
 
-function parseSse(text) {
+export function parseSse(text) {
   const messages = [];
   for (const block of text.split(/\r?\n\r?\n/)) {
     const dataLines = block.split(/\r?\n/)
