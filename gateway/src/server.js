@@ -87,8 +87,10 @@ const server = http.createServer(async (req, res) => {
   if (req.method === "GET" && url.pathname === "/oauth/google/start") {
     if (!safeEqual(getBearer(req), adminToken)) return send(res, 401, { error: "Administrator authentication required." });
     try {
-      res.writeHead(302, { location: createGoogleAuthorizationUrl(), "cache-control": "no-store" });
-      return res.end();
+      return send(res, 200, {
+        authorizationUrl: createGoogleAuthorizationUrl(),
+        instructions: "Open authorizationUrl in a browser, sign in to Google, and approve Home access."
+      });
     } catch (error) { return send(res, 500, { error: error.message }); }
   }
 
