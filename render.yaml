@@ -11,5 +11,9 @@ services:
     envVars:
       - key: OPENAI_API_KEY
         sync: false
+      - key: APP_ACCESS_CODE
+        sync: false
       - key: OPENAI_MODEL
-        value: gpt-6-astra
+        value: gpt-6-luna
+      - key: OPENAI_MODEL_COMPLEX
+        value: gpt-6.1-sol

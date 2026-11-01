@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "fix/**"
+      - "feature/**"
   pull_request:
     branches:
       - main
@@ -14,47 +15,35 @@ jobs:
   build-and-test:
     name: Build and test on Android emulator
     runs-on: ubuntu-latest
-
     steps:
-      - name: Get project files
+      - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install Java
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
-
-      - name: Install Gradle
+          java-version: "17"
+      - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.9'
-
-      - name: Install Android SDK
+          gradle-version: "8.9"
+      - name: Set up Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
-
       - name: Install Android packages
-        run: |
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
-
-      - name: Build APK
+        run: sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+      - name: Build debug APK
         run: gradle assembleDebug
-
-      - name: Save APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: AI-Playground-APK
           path: app/build/outputs/apk/debug/app-debug.apk
-
-      - name: Enable KVM for Android emulator
+      - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-
-      - name: Run UI tests on cloud Android emulator
+      - name: Run Android emulator UI tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 35
@@ -66,21 +55,18 @@ jobs:
           script: |
             gradle connectedDebugAndroidTest
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb shell am force-stop com.aiplayground.app
             adb shell am start -n com.aiplayground.app/.MainActivity
             sleep 5
             mkdir -p app/build/preview
             adb exec-out screencap -p > app/build/preview/AI-Playground-Emulator.png
-
-      - name: Save app preview screenshot
+      - name: Upload emulator screenshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: AI-Playground-Emulator-Screenshot
           path: app/build/preview/AI-Playground-Emulator.png
           if-no-files-found: ignore
-
-      - name: Save emulator test reports
+      - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
