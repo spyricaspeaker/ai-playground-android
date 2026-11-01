@@ -70,11 +70,11 @@ The default listener binds to `127.0.0.1`. For remote use, put it behind a trust
 After the gateway is running and the public HTTPS callback is reachable, open this URL while supplying the administrator bearer token:
 
 ```bash
-curl -i -H "Authorization: Bearer $HOME_ADMIN_TOKEN" \
+curl -s -H "Authorization: Bearer $HOME_ADMIN_TOKEN" \
   "https://YOUR_PUBLIC_GATEWAY_HOST/oauth/google/start"
 ```
 
-The endpoint redirects to Google's consent screen. Complete authorization using the Google account that owns/manages the intended Home structure. Google redirects to the callback; the gateway exchanges the code, stores the refresh token encrypted, and refreshes access tokens automatically.
+The endpoint returns an `authorizationUrl`. Open that URL in a browser and complete authorization using the Google account that owns/manages the intended Home structure. Google redirects to the callback; the gateway exchanges the code, stores the refresh token encrypted, and refreshes access tokens automatically.
 
 Check connection status:
 
