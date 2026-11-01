@@ -3,9 +3,15 @@ import { randomUUID, timingSafeEqual } from "node:crypto";
 import { AGENTS, authorizeToolCall } from "./policy.js";
 
 const PORT = Number(process.env.PORT || 8787);
+const HOST = process.env.HOST || "127.0.0.1";
 const UPSTREAM_URL = process.env.GOOGLE_HOME_MCP_URL || "https://home.googleapis.com/mcp";
 const UPSTREAM_TOKEN = process.env.GOOGLE_HOME_ACCESS_TOKEN || "";
 const MAX_BODY = 256 * 1024;
+
+const configuredAgentTokens = Object.keys(AGENTS).map((name) => process.env[`${name}_TOKEN`] || "");
+if (configuredAgentTokens.some((token) => token.length < 32) || new Set(configuredAgentTokens).size !== 4) {
+  throw new Error("Set four unique agent tokens, each at least 32 characters long, before starting the gateway.");
+}
 
 function safeEqual(a, b) {
   const left = Buffer.from(String(a));
@@ -170,6 +176,6 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, HOST, () => {
   process.stdout.write(`AI Playground Home Gateway listening on port ${PORT}\n`);
 });
