@@ -52,6 +52,11 @@ function modelForAgent(agent) {
   return process.env[`OPENAI_MODEL_${agent}`] || defaultModel;
 }
 
+function modelForAgent(agent) {
+  if (agent === "NOVA" || agent === "ATLAS") return process.env[`OPENAI_MODEL_${agent}`] || complexModel;
+  return process.env[`OPENAI_MODEL_${agent}`] || model;
+}
+
 function client() {
   if (!process.env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is not configured.");
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
