@@ -63,7 +63,7 @@ npm test
 npm start
 ```
 
-The default listener binds to `127.0.0.1`. For remote use, put it behind a trusted HTTPS reverse proxy and configure `HOST=127.0.0.1` behind that proxy, or use an appropriately protected private network. Do not expose the service directly to the public internet.
+The default listener binds to `127.0.0.1` for local development. For a container platform such as Cloud Run, set `HOST=0.0.0.0` and let the platform's HTTPS ingress proxy traffic to the container port. Do not expose an unprotected listener directly to the public internet.
 
 ## 4. Connect Google Home
 
