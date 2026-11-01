@@ -16,7 +16,7 @@ Deploy the Node.js service in \`backend/\` using the included \`render.yaml\`. C
 
 After deployment, enter the service HTTPS URL and app access code in the app. The \`/health\` endpoint should return \`{"ok":true}\`.
 
-Team mode runs four independent agent responses and one ECHO synthesis call. It therefore uses more API calls than a single-agent chat.
+Team mode runs four independent agent responses and one ECHO synthesis call. NOVA and ATLAS use the stronger model by default, and final synthesis uses it too. Team mode therefore uses more API calls and can cost more than a single-agent chat.
 
 ## Build
 
