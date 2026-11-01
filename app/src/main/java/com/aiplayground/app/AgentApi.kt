@@ -14,7 +14,8 @@ object AgentApi {
     fun sendMessage(
         agent: String,
         message: String,
-        history: List<String>,\n        accessCode: String,
+        history: List<String>,
+        accessCode: String,
         onSuccess: (String) -> Unit,
         onError: (String) -> Unit
     ) {
@@ -29,7 +30,8 @@ object AgentApi {
                     connectTimeout = 30000
                     readTimeout = 120000
                     doOutput = true
-                    setRequestProperty("Content-Type", "application/json")\n                    setRequestProperty("Authorization", "Bearer $accessCode")
+                    setRequestProperty("Content-Type", "application/json")
+                    setRequestProperty("Authorization", "Bearer $accessCode")
                 }
                 val body = JSONObject()
                     .put("agent", agent)
