@@ -253,6 +253,9 @@ private fun PlaygroundScreen(
                 if (lastReply != null && ttsReady) tts.speak(lastReply.removePrefix("Agent: "), TextToSpeech.QUEUE_FLUSH, null, "replay")
                 else error = "No agent reply is available to replay yet."
             }) { Text("🔊 Replay latest reply") }
+
+            Spacer(Modifier.height(22.dp))
+            HandshakePanel()
         }
     }
 }
