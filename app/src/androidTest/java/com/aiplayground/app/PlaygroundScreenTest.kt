@@ -52,7 +52,7 @@ class PlaygroundScreenTest {
     @Test
     fun selectingEachAgentCardIsSupported() {
         listOf("ARIA", "NOVA", "ATLAS", "ECHO").forEach { agent ->
-            composeRule.onNode(hasText(agent, substring = true))
+            composeRule.onNodeWithText(agent, substring = true)
                 .performScrollTo()
                 .performClick()
             composeRule.onNodeWithText("YOUR MESSAGE").performScrollTo().assertIsDisplayed()
