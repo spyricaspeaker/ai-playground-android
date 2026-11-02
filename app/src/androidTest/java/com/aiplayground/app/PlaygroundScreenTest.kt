@@ -5,8 +5,6 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNode
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,7 +19,7 @@ class PlaygroundScreenTest {
     fun mainScreenShowsCurrentAgentNetworkAndConnectionControls() {
         composeRule.onNodeWithText("AI PLAYGROUND").assertIsDisplayed()
         listOf("ARIA", "NOVA", "ATLAS", "ECHO").forEach { agent ->
-            composeRule.onNode(hasText(agent, substring = true)).performScrollTo().assertIsDisplayed()
+            composeRule.onNodeWithText(agent, substring = true).performScrollTo().assertIsDisplayed()
         }
         composeRule.onNodeWithText("NETWORK STATUS").assertIsDisplayed()
         composeRule.onNodeWithText("Ready for your message").assertIsDisplayed()
