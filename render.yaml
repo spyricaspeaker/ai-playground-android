@@ -9,7 +9,11 @@ services:
     startCommand: npm start
     healthCheckPath: /health
     envVars:
+      - key: AI_PROVIDER
+        value: openai
       - key: OPENAI_API_KEY
+        sync: false
+      - key: NVIDIA_API_KEY
         sync: false
       - key: APP_ACCESS_CODE
         sync: false
@@ -17,3 +21,7 @@ services:
         value: gpt-6-luna
       - key: OPENAI_MODEL_COMPLEX
         value: gpt-6.1-sol
+      - key: NVIDIA_MODEL
+        value: nvidia/nemotron-3.5-lightning-30b-a3b
+      - key: NVIDIA_MODEL_COMPLEX
+        value: nvidia/nemotron-3-super-120b-a12b
