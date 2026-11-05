@@ -120,10 +120,11 @@ fun NeuraApp(onSpeak: (String) -> Unit) {
                                             status = "SIGNAL RECEIVED: ${signal.name}"
                                             history.add(ChatLine("YOU • ${signal.name}", signal.meaning, true))
                                             history.add(ChatLine("NEURA", "Interpreting signal…"))
+                                            val agentSnapshot = selectedAgent
+                                            val endpointSnapshot = if (remoteMode) endpoint else ""
                                             scope.launch {
-                                                val agentSnapshot = selectedAgent
                                                 val intent = withContext(Dispatchers.IO) {
-                                                    NeuralInterpreter.interpret(signal, agentSnapshot, if (remoteMode) endpoint else "")
+                                                    NeuralInterpreter.interpret(signal, agentSnapshot, endpointSnapshot)
                                                 }
                                                 val reply = AgentEngine.respond(agentSnapshot, signal, intent)
                                                 lastResponse = reply
