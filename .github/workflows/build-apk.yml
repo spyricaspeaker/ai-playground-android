@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - neura-bai-0.1
 
 jobs:
   build:
@@ -40,6 +41,6 @@ jobs:
       - name: Save APK
         uses: actions/upload-artifact@v4
         with:
-          name: AI-Playground-APK
+          name: NEURA-BAI-0.1-APK
           path: app/build/outputs/apk/debug/app-debug.apk
           
