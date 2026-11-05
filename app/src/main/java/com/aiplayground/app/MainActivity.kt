@@ -18,6 +18,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 import kotlin.math.sin
 
@@ -42,6 +45,7 @@ data class ChatLine(val speaker: String, val message: String, val isUser: Boolea
 
 @Composable
 fun NeuraApp(onSpeak: (String) -> Unit) {
+    val scope = rememberCoroutineScope()
     var selectedAgent by remember { mutableStateOf(AgentDirectory.agents.first()) }
     var selectedSignal by remember { mutableStateOf<BrainSignal?>(null) }
     var lastResponse by remember { mutableStateOf("Choose a simulated signal to begin. These are demo inputs, not decoded thoughts.") }
@@ -114,11 +118,18 @@ fun NeuraApp(onSpeak: (String) -> Unit) {
                                         onClick = {
                                             selectedSignal = signal
                                             status = "SIGNAL RECEIVED: ${signal.name}"
-                                            val intent = NeuralInterpreter.interpret(signal, selectedAgent, if (remoteMode) endpoint else "")
-                                            val reply = AgentEngine.respond(selectedAgent, signal, intent)
-                                            lastResponse = reply
                                             history.add(ChatLine("YOU • ${signal.name}", signal.meaning, true))
-                                            history.add(ChatLine(selectedAgent.name, reply))
+                                            history.add(ChatLine("NEURA", "Interpreting signal…"))
+                                            scope.launch {
+                                                val agentSnapshot = selectedAgent
+                                                val intent = withContext(Dispatchers.IO) {
+                                                    NeuralInterpreter.interpret(signal, agentSnapshot, if (remoteMode) endpoint else "")
+                                                }
+                                                val reply = AgentEngine.respond(agentSnapshot, signal, intent)
+                                                lastResponse = reply
+                                                if (history.lastOrNull()?.speaker == "NEURA") history.removeAt(history.lastIndex)
+                                                history.add(ChatLine(agentSnapshot.name, reply))
+                                            }
                                         },
                                         modifier = Modifier.weight(1f),
                                         colors = ButtonDefaults.buttonColors(containerColor = if (selectedSignal == signal) Color(0xFF51458D) else Panel),
