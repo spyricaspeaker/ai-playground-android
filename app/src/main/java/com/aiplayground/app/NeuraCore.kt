@@ -82,3 +82,53 @@ object AgentEngine {
         return "$opening $response\n\nIntent: ${intent.title}. ${intent.detail}"
     }
 }
+
+
+/** Sends a chat turn through the authenticated server-side model gateway. */
+fun chatWithAgent(
+    gatewayBaseUrl: String,
+    agentToken: String,
+    agent: String,
+    message: String,
+    history: List<Pair<String, String>>,
+    collaborate: Boolean
+): List<Pair<String, String>> {
+    val path = if (collaborate) "/v1/collaborate" else "/v1/chat"
+    val connection = (URL(gatewayBaseUrl.trim().trimEnd('/') + path).openConnection() as HttpURLConnection).apply {
+        requestMethod = "POST"
+        connectTimeout = 10000
+        readTimeout = 50000
+        doOutput = true
+        setRequestProperty("Content-Type", "application/json")
+        setRequestProperty("Authorization", "Bearer $agentToken")
+    }
+    val messages = org.json.JSONArray()
+    history.takeLast(10).forEach { (role, content) ->
+        messages.put(JSONObject().put("role", role).put("content", content))
+    }
+    messages.put(JSONObject().put("role", "user").put("content", message))
+    val body = JSONObject().put("messages", messages).toString()
+    return try {
+        connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream
+        val payload = stream.bufferedReader().use { it.readText() }
+        val json = JSONObject(payload)
+        if (status !in 200..299) {
+            throw IllegalStateException(json.optString("error", "Gateway request failed (HTTP $status)."))
+        }
+        if (collaborate) {
+            val primary = json.optJSONObject("primary") ?: JSONObject()
+            val peer = json.optJSONObject("peer") ?: JSONObject()
+            listOf(
+                (primary.optString("agent", agent) + " • " + primary.optString("provider", "model")) to primary.optString("content", "No response returned."),
+                (peer.optString("agent", "Peer") + " • " + peer.optString("provider", "model")) to peer.optString("content", "No peer response returned.")
+            )
+        } else {
+            listOf((json.optString("agent", agent) + " • " + json.optString("provider", "model")) to
+                json.optString("content", "No response returned."))
+        }
+    } finally {
+        connection.disconnect()
+    }
+}

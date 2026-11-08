@@ -120,6 +120,29 @@ const server = http.createServer(async (req, res) => {
     return send(res, 200, { disconnected: true });
   }
 
+
+  if (req.method === "POST" && ["/v1/chat", "/v1/collaborate"].includes(url.pathname)) {
+    const agent = identifyAgent(getBearer(req));
+    if (!agent) return send(res, 401, { error: "Unauthorized agent." });
+    try {
+      const body = await readJson(req);
+      if (typeof body.message === "string" && !Array.isArray(body.messages)) {
+        body.messages = [{ role: "user", content: body.message }];
+      }
+      if (!Array.isArray(body.messages)) {
+        return send(res, 400, { error: "Provide message or messages." });
+      }
+      const result = url.pathname === "/v1/collaborate"
+        ? await collaborateBetweenAgents(agent, body.messages)
+        : await callAgentModel(agent, body.messages);
+      audit({ agent, operation: url.pathname === "/v1/collaborate" ? "collaborate" : "chat", allowed: true });
+      return send(res, 200, result);
+    } catch (error) {
+      audit({ agent, operation: "model_request", allowed: false, error: error.message });
+      return send(res, error.status || 502, { error: error.message });
+    }
+  }
+
   if (req.method === "GET" && url.pathname === "/v1/agents/me") {
     const agent = identifyAgent(getBearer(req));
     if (!agent) return send(res, 401, { error: "Unauthorized agent." });
