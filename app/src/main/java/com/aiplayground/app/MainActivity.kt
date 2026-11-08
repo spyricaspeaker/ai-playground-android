@@ -18,6 +18,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -50,6 +51,10 @@ fun NeuraApp(onSpeak: (String) -> Unit) {
     var selectedSignal by remember { mutableStateOf<BrainSignal?>(null) }
     var lastResponse by remember { mutableStateOf("Choose a simulated signal to begin. These are demo inputs, not decoded thoughts.") }
     var endpoint by remember { mutableStateOf("") }
+    var gatewayBaseUrl by remember { mutableStateOf("") }
+    var agentToken by remember { mutableStateOf("") }
+    var chatDraft by remember { mutableStateOf("") }
+    var chatBusy by remember { mutableStateOf(false) }
     var remoteMode by remember { mutableStateOf(false) }
     var consentGranted by remember { mutableStateOf(false) }
     var status by remember { mutableStateOf("SIMULATOR READY") }
@@ -184,8 +189,90 @@ fun NeuraApp(onSpeak: (String) -> Unit) {
                         }
                     }
                 }
+
                 item {
-                    SectionTitle("5  •  PERMISSION GATEWAY")
+                    SectionTitle("5  •  LIVE AI COMPANION CHAT")
+                    Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
+                        Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text("Secure model gateway URL", color = Color.White)
+                            OutlinedTextField(
+                                value = gatewayBaseUrl, onValueChange = { gatewayBaseUrl = it },
+                                modifier = Modifier.fillMaxWidth(), singleLine = true,
+                                placeholder = { Text("https://your-gateway.example") }
+                            )
+                            Text("Bearer token for selected agent: ${selectedAgent.name}", color = Color.White)
+                            OutlinedTextField(
+                                value = agentToken, onValueChange = { agentToken = it },
+                                modifier = Modifier.fillMaxWidth(), singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                placeholder = { Text("Paste this agent's token") }
+                            )
+                            OutlinedTextField(
+                                value = chatDraft, onValueChange = { chatDraft = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                placeholder = { Text("Message ${selectedAgent.name}…") },
+                                minLines = 2
+                            )
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Button(
+                                    enabled = !chatBusy && gatewayBaseUrl.startsWith("https://") && agentToken.length >= 32 && chatDraft.isNotBlank(),
+                                    onClick = {
+                                        val message = chatDraft.trim()
+                                        val agent = selectedAgent.name
+                                        val prior = history.filter { it.isUser || it.speaker.substringBefore(" • ") in listOf("ARIA", "NOVA", "ATLAS", "ECHO") }
+                                            .takeLast(10)
+                                            .map { (if (it.isUser) "user" else "assistant") to it.message }
+                                        chatDraft = ""
+                                        chatBusy = true
+                                        history.add(ChatLine("YOU", message, true))
+                                        history.add(ChatLine("NEURA", "Contacting ${agent}…"))
+                                        scope.launch {
+                                            try {
+                                                val replies = withContext(Dispatchers.IO) {
+                                                    chatWithAgent(gatewayBaseUrl, agentToken, agent, message, prior, false)
+                                                }
+                                                if (history.lastOrNull()?.speaker == "NEURA") history.removeAt(history.lastIndex)
+                                                replies.forEach { (speaker, content) -> history.add(ChatLine(speaker, content)) }
+                                            } catch (error: Exception) {
+                                                if (history.lastOrNull()?.speaker == "NEURA") history.removeAt(history.lastIndex)
+                                                history.add(ChatLine("GATEWAY ERROR", error.message ?: "Unable to reach the model gateway."))
+                                            } finally { chatBusy = false }
+                                        }
+                                    }
+                                ) { Text(if (chatBusy) "Working…" else "Send") }
+                                OutlinedButton(
+                                    enabled = !chatBusy && gatewayBaseUrl.startsWith("https://") && agentToken.length >= 32 && chatDraft.isNotBlank(),
+                                    onClick = {
+                                        val message = chatDraft.trim()
+                                        val agent = selectedAgent.name
+                                        val prior = history.filter { it.isUser || it.speaker.substringBefore(" • ") in listOf("ARIA", "NOVA", "ATLAS", "ECHO") }
+                                            .takeLast(10)
+                                            .map { (if (it.isUser) "user" else "assistant") to it.message }
+                                        chatDraft = ""
+                                        chatBusy = true
+                                        history.add(ChatLine("YOU", message, true))
+                                        history.add(ChatLine("NEURA", "ARIA and NOVA are comparing notes…"))
+                                        scope.launch {
+                                            try {
+                                                val replies = withContext(Dispatchers.IO) {
+                                                    chatWithAgent(gatewayBaseUrl, agentToken, agent, message, prior, true)
+                                                }
+                                                if (history.lastOrNull()?.speaker == "NEURA") history.removeAt(history.lastIndex)
+                                                replies.forEach { (speaker, content) -> history.add(ChatLine(speaker, content)) }
+                                            } catch (error: Exception) {
+                                                if (history.lastOrNull()?.speaker == "NEURA") history.removeAt(history.lastIndex)
+                                                history.add(ChatLine("GATEWAY ERROR", error.message ?: "Unable to reach the model gateway."))
+                                            } finally { chatBusy = false }
+                                        }
+                                    }
+                                ) { Text("Ask peer") }
+                            }
+                            Text("The app sends chat history to your HTTPS gateway. Provider API keys stay on the server; this agent token is held only in this screen's memory.", color = Soft, fontSize = 10.sp, lineHeight = 14.sp)
+                        }
+                    }
+                }
+                item {
+                    SectionTitle("6  •  PERMISSION GATEWAY")
                     Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
                         Column(Modifier.padding(14.dp)) {
                             Text("Human approval required for external actions", color = Color.White)
@@ -201,7 +288,7 @@ fun NeuraApp(onSpeak: (String) -> Unit) {
                         }
                     }
                 }
-                item { SectionTitle("6  •  CONVERSATION") }
+                item { SectionTitle("7  •  CONVERSATION") }
                 items(history) { line ->
                     Card(colors = CardDefaults.cardColors(containerColor = if (line.isUser) Color(0xFF242B42) else Panel)) {
                         Column(Modifier.fillMaxWidth().padding(12.dp)) {
