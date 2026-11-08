@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - neura-bai-0.1
+      - feature/neura-dual-llm-setup
 
 jobs:
   build:
