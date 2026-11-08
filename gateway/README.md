@@ -135,3 +135,36 @@ The Google Home MCP endpoint is `https://home.googleapis.com/mcp`. The official 
 ## Tests
 
 Run `npm test` to verify agent isolation, read-only ATLAS access, ECHO's speaker-only control, NOVA's plug access, and global denials. GitHub Actions runs these tests when gateway files change.
+
+## 8. Dual-LLM conversation and agent collaboration
+
+The model router provides two authenticated endpoints:
+
+- `POST /v1/chat` — send a message to the authenticated agent's assigned model.
+- `POST /v1/collaborate` — ARIA and NOVA independently answer the same conversation; the endpoint returns both responses. ATLAS and ECHO can also request this peer review, with ARIA/NOVA as the pair.
+
+Provider assignment:
+- ARIA, ATLAS and ECHO: OpenAI-compatible Chat Completions API.
+- NOVA: NVIDIA Nemotron through NVIDIA's OpenAI-compatible endpoint.
+
+Set `OPENAI_API_KEY`, `OPENAI_MODEL`, `NVIDIA_API_KEY` and `NVIDIA_MODEL` in the server's secret manager. Optional base URLs are configurable. Never put provider keys in the Android app, repository, or APK.
+
+Example single-agent request:
+
+```bash
+curl -X POST "https://YOUR_PUBLIC_GATEWAY_HOST/v1/chat" \
+  -H "Authorization: Bearer $ARIA_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Help me plan the next NEURA development step."}'
+```
+
+Example peer collaboration request:
+
+```bash
+curl -X POST "https://YOUR_PUBLIC_GATEWAY_HOST/v1/collaborate" \
+  -H "Authorization: Bearer $ARIA_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"message":"Review the proposed NEURA dual-agent architecture and identify risks."}'
+```
+
+The response includes separate `primary` and `peer` objects, including provider/model identifiers and each agent's text. The model router does not grant either model direct tool access; external actions remain behind the existing permission gateway.
